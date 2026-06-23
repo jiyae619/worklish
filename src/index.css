@@ -1,0 +1,20 @@
+@import url('https://fonts.googleapis.com/css2?family=Open+Sans:wght@400;500;600;700;800&family=Outfit:wght@400;500;600;700;800;900&display=swap');
+@tailwind base;
+@tailwind components;
+@tailwind utilities;
+
+@layer base {
+    body {
+        @apply bg-[#E4E3E0] text-[#141414] font-sans antialiased overflow-x-hidden;
+    }
+}
+
+@layer utilities {
+    .font-sans {
+        font-family: 'Open Sans', ui-sans-serif, system-ui, sans-serif;
+    }
+
+    .font-display {
+        font-family: 'Outfit', ui-sans-serif, system-ui, sans-serif;
+    }
+}
