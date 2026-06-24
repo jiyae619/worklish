@@ -254,13 +254,16 @@ function shuffle(a) {
 async function openFlashcards() {
   const deck = await getDeck();
   el("fc-count").textContent = `${deck.length} card${deck.length === 1 ? "" : "s"}`;
+  el("fc-wallpaper").hidden = true;
   if (deck.length === 0) {
     el("fc-empty").hidden = false;
     el("fc-study").hidden = true;
     el("fc-done").hidden = true;
+    el("fc-wallpaper-open").hidden = true;
     return;
   }
   el("fc-empty").hidden = true;
+  el("fc-wallpaper-open").hidden = false;
   session = shuffle(deck.slice());
   sessionPos = 0;
   el("fc-done").hidden = true;
@@ -401,6 +404,103 @@ async function clearDeck() {
   await openFlashcards();
 }
 
+/* ───────────────────────── flashcards: iPhone wallpapers ───────────────────────── */
+const WP_W = 1290, WP_H = 2796; // iPhone-class portrait; scales down on any phone
+
+function wrapLines(ctx, text, maxWidth) {
+  const words = String(text || "").split(/\s+/).filter(Boolean);
+  const lines = [];
+  let line = "";
+  for (const w of words) {
+    const t = line ? line + " " + w : w;
+    if (line && ctx.measureText(t).width > maxWidth) { lines.push(line); line = w; }
+    else line = t;
+  }
+  if (line) lines.push(line);
+  return lines;
+}
+function drawBlock(ctx, text, o) {
+  ctx.font = o.font;
+  ctx.fillStyle = o.color;
+  ctx.textAlign = "center";
+  let y = o.y;
+  for (const ln of wrapLines(ctx, text, o.maxWidth)) { ctx.fillText(ln, o.x, y); y += o.lineHeight; }
+  return y;
+}
+function renderWallpaper(card) {
+  const c = document.createElement("canvas");
+  c.width = WP_W; c.height = WP_H;
+  const ctx = c.getContext("2d");
+  const g = ctx.createLinearGradient(0, 0, 0, WP_H);
+  g.addColorStop(0, "#0c1a13"); g.addColorStop(1, "#0a130e");
+  ctx.fillStyle = g; ctx.fillRect(0, 0, WP_W, WP_H);
+  const cx = WP_W / 2, maxW = WP_W - 240;
+  ctx.textAlign = "center";
+  // phrase — dim gray on a dark field, legible to you up close but not to onlookers
+  let y = 1380;
+  y = drawBlock(ctx, `“${card.phrase}”`, { x: cx, y, maxWidth: maxW, font: "600 72px Georgia, serif", color: "#626e67", lineHeight: 90 });
+  if (card.meaning) {
+    y += 28;
+    y = drawBlock(ctx, card.meaning, { x: cx, y, maxWidth: maxW, font: "400 46px -apple-system, system-ui, sans-serif", color: "#7e8b82", lineHeight: 64 });
+  }
+  y += 44;
+  ctx.strokeStyle = "#1c8043"; ctx.lineWidth = 4;
+  ctx.beginPath(); ctx.moveTo(cx - 70, y); ctx.lineTo(cx + 70, y); ctx.stroke();
+  y += 60;
+  if (card.example) {
+    y = drawBlock(ctx, card.example, { x: cx, y, maxWidth: maxW, font: "italic 400 38px Georgia, serif", color: "#63706a", lineHeight: 54 });
+  }
+  return c;
+}
+function canvasToBlobUrl(canvas) {
+  return new Promise((resolve) => canvas.toBlob((b) => resolve(URL.createObjectURL(b)), "image/png"));
+}
+function slugify(s) {
+  return String(s || "card").toLowerCase().replace(/[^a-z0-9]+/g, "-").replace(/^-+|-+$/g, "").slice(0, 40) || "card";
+}
+
+let wpDeck = [];
+async function openWallpaper() {
+  wpDeck = await getDeck();
+  if (!wpDeck.length) return;
+  el("fc-empty").hidden = true;
+  el("fc-study").hidden = true;
+  el("fc-done").hidden = true;
+  el("fc-wallpaper-open").hidden = true;
+  el("fc-wallpaper").hidden = false;
+  el("wp-status").textContent = `${wpDeck.length} card${wpDeck.length === 1 ? "" : "s"} in your deck`;
+  wpPreview();
+}
+function wpPreview() {
+  if (!wpDeck.length) return;
+  const card = wpDeck[Math.floor(Math.random() * wpDeck.length)];
+  el("wp-preview").src = renderWallpaper(card).toDataURL("image/png");
+}
+async function wpDownloadAll() {
+  if (!wpDeck.length) return;
+  const MAX = 25;
+  const pick = shuffle(wpDeck.slice()).slice(0, MAX);
+  el("wp-download").disabled = true;
+  el("wp-status").textContent = `Generating ${pick.length} wallpaper${pick.length === 1 ? "" : "s"}…`;
+  let done = 0;
+  for (let i = 0; i < pick.length; i++) {
+    const url = await canvasToBlobUrl(renderWallpaper(pick[i]));
+    await new Promise((resolve) => {
+      chrome.downloads.download(
+        {
+          url,
+          filename: `worklish-wallpapers/${String(i + 1).padStart(2, "0")}-${slugify(pick[i].phrase)}.png`,
+          saveAs: false,
+          conflictAction: "uniquify",
+        },
+        () => { done++; setTimeout(() => URL.revokeObjectURL(url), 8000); resolve(); }
+      );
+    });
+  }
+  el("wp-download").disabled = false;
+  el("wp-status").textContent = `Saved ${done} to Downloads → worklish-wallpapers/${wpDeck.length > MAX ? ` (capped at ${MAX})` : ""}`;
+}
+
 /* ───────────────────────── view switching ───────────────────────── */
 function showView(which) {
   const analyze = which === "analyze";
@@ -431,6 +531,10 @@ function showView(which) {
   el("fc-import").addEventListener("click", () => el("fc-file").click());
   el("fc-file").addEventListener("change", handleImportFile);
   el("fc-clear").addEventListener("click", clearDeck);
+  el("fc-wallpaper-open").addEventListener("click", openWallpaper);
+  el("wp-shuffle").addEventListener("click", wpPreview);
+  el("wp-download").addEventListener("click", wpDownloadAll);
+  el("wp-back").addEventListener("click", openFlashcards);
 
   await refreshBadge();
   await refreshVideo();

@@ -23,6 +23,17 @@ It's just a UI — all the analysis (and your API keys) stay in the backend.
 - Open the **Flashcards** tab to study: tap a card to flip it (phrase → meaning + example + usage tip), then **Got it** / **Again** (Again requeues the card later in the session). **▶ Play moment** opens the source video at that timestamp.
 - **CSV** exports an Anki/Quizlet-importable file; **JSON** is a full backup you can re-**Import** later (e.g. to move your deck to another machine). The deck lives per browser profile, so export is also your backup.
 
+## iPhone wallpapers
+
+Turn your saved expressions into lock-screen wallpapers you glance at all day:
+
+1. In the **Flashcards** tab, tap **📱 Make iPhone wallpapers**.
+2. **Shuffle** to preview, then **Download all** — PNGs save to `Downloads/worklish-wallpapers/` (one per card, phone-resolution 1290×2796).
+3. AirDrop that folder to your iPhone (or save the images to Photos).
+4. Long-press your **Lock Screen → ＋ → Photo Shuffle → Select Photos Manually**, pick the Worklish images, set a shuffle frequency.
+
+Your lock screen now rotates through your expressions — passive review on every glance. The phrase is rendered in dim gray so it's legible to you up close but not to onlookers. Everything is generated locally; no backend or account needed.
+
 ## Notes
 
 - The backend must be running and reachable; the extension calls `POST /api/analyze`.

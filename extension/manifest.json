@@ -1,10 +1,10 @@
 {
   "manifest_version": 3,
   "name": "Worklish — Learn from YouTube",
-  "version": "0.2.0",
+  "version": "0.3.0",
   "key": "MIIBIjANBgkqhkiG9w0BAQEFAAOCAQ8AMIIBCgKCAQEA7Ev3KITs9JI+ERvxMK3U+jgbcE0yCUNQAyCKv+1mC99cGNQIHPPkQ4FxH019JcwoQByCmVqydJZRoBH08DuOTjbsAkff4IGEEiRAWS9bCWmMorx2EWWRctVzPOR3im1Q6JmLTFMXRNopng2YZVQ1Xx2hlTtXPGMrBpxhlNbDFwOEIZGGdn1NmJAHEH9/C0+kvm4vDgeIocWdIVd8o5wJXRKDefp5y3yZnwsREsh0KezfsErIW/3AYwHXSbEzQBP5TJUmrFdPpEEhKFC8obEwj98cJaLbrwMVHJcB48dTiYtvpPVVp9B01iHLqg3l5wXRckGOp3K0RPznu6ueHHj5DwIDAQAB",
   "description": "Analyze the YouTube video you're watching for work insights and advanced English expressions.",
-  "permissions": ["sidePanel", "tabs", "storage", "unlimitedStorage", "nativeMessaging"],
+  "permissions": ["sidePanel", "tabs", "storage", "unlimitedStorage", "downloads", "nativeMessaging"],
   "host_permissions": [
     "http://localhost:5001/*",
     "http://127.0.0.1:5001/*"

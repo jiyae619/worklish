@@ -165,3 +165,22 @@ nav.tabs .tab.active { color: var(--ink); border-bottom-color: var(--green); }
   background: var(--ink); color: var(--bg); border: 2px solid var(--ink); cursor: pointer;
   padding: 11px 22px; font: 800 11px/1 system-ui; letter-spacing: 0.1em; text-transform: uppercase;
 }
+
+/* ───────── iPhone wallpaper generator ───────── */
+.fc-wallpaper-cta {
+  width: 100%; margin-bottom: 16px; cursor: pointer;
+  background: var(--bg); border: 2px dashed var(--green); color: var(--green);
+  padding: 11px; font: 800 11px/1 system-ui; letter-spacing: 0.08em; text-transform: uppercase;
+}
+.fc-wallpaper-cta:hover { background: var(--green); color: var(--bg); border-style: solid; }
+.wp-preview {
+  display: block; width: 190px; max-width: 62%; margin: 6px auto 14px;
+  border: 2px solid var(--ink); border-radius: 16px;
+}
+#wp-status { text-align: center; margin: 8px 0; min-height: 16px; }
+.wp-help { margin-top: 14px; font-size: 12.5px; }
+.wp-help summary { cursor: pointer; font-weight: 700; color: var(--ink); }
+.wp-help ol { margin: 10px 0 0; padding-left: 18px; color: var(--muted); }
+.wp-help li { margin: 7px 0; line-height: 1.5; }
+.wp-help b { color: var(--ink); }
+#wp-back { display: block; margin: 16px auto 0; }

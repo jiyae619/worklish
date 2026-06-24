@@ -58,6 +58,8 @@
       </div>
     </div>
 
+    <button id="fc-wallpaper-open" class="fc-wallpaper-cta" hidden>📱 Make iPhone wallpapers</button>
+
     <div id="fc-empty" class="muted">No cards yet. Analyze a video and tap <b>★ Save</b> on an expression to start your deck. It accumulates across sessions.</div>
 
     <div id="fc-study" hidden>
@@ -80,6 +82,26 @@
     <div id="fc-done" class="fc-done" hidden>
       <p>Reviewed all <b id="fc-done-n">0</b> cards 🎉</p>
       <button id="fc-restart">Review again</button>
+    </div>
+
+    <div id="fc-wallpaper" hidden>
+      <div class="fc-progress">Lock-screen wallpapers from your deck</div>
+      <img id="wp-preview" class="wp-preview" alt="wallpaper preview" />
+      <div class="fc-controls">
+        <button id="wp-shuffle" class="fc-again">Shuffle</button>
+        <button id="wp-download" class="fc-got">Download all</button>
+      </div>
+      <p id="wp-status" class="muted"></p>
+      <details class="wp-help">
+        <summary>How to set them on your iPhone</summary>
+        <ol>
+          <li>Get the images onto your iPhone — AirDrop the <b>worklish-wallpapers</b> folder from your Mac, or save them to Photos.</li>
+          <li>Long-press your <b>Lock Screen</b> → tap <b>＋</b> → <b>Photo Shuffle</b>.</li>
+          <li>Choose <b>Select Photos Manually</b>, pick the Worklish images, set <b>Shuffle Frequency</b> (On Lock / Hourly / Daily).</li>
+          <li>Tap <b>Add</b> — your lock screen now rotates through your expressions.</li>
+        </ol>
+      </details>
+      <button id="wp-back" class="fc-link">← back to cards</button>
     </div>
 
     <input type="file" id="fc-file" accept="application/json,.json" hidden />
