@@ -1,5 +1,6 @@
 const DEFAULT_BACKEND = "http://localhost:5001";
 const DECK_KEY = "flashcards";
+const WP_EXPORTED_KEY = "wallpaper_exported";
 
 const el = (id) => document.getElementById(id);
 let currentVideoId = null;
@@ -12,6 +13,14 @@ async function getDeck() {
 }
 async function setDeck(deck) {
   await chrome.storage.local.set({ [DECK_KEY]: deck });
+}
+// Tracks which card ids have already been saved as wallpapers, so we never re-download the same image.
+async function getExported() {
+  const data = await chrome.storage.local.get(WP_EXPORTED_KEY);
+  return new Set(Array.isArray(data[WP_EXPORTED_KEY]) ? data[WP_EXPORTED_KEY] : []);
+}
+async function setExported(set) {
+  await chrome.storage.local.set({ [WP_EXPORTED_KEY]: [...set] });
 }
 function cardId(videoId, phrase) {
   return `${videoId || "?"}::${String(phrase || "").trim().toLowerCase()}`;
@@ -468,7 +477,10 @@ async function openWallpaper() {
   el("fc-done").hidden = true;
   el("fc-wallpaper-open").hidden = true;
   el("fc-wallpaper").hidden = false;
-  el("wp-status").textContent = `${wpDeck.length} card${wpDeck.length === 1 ? "" : "s"} in your deck`;
+  const exported = await getExported();
+  const fresh = wpDeck.filter((c) => !exported.has(c.id)).length;
+  el("wp-status").textContent = `${wpDeck.length} card${wpDeck.length === 1 ? "" : "s"} in your deck · ${fresh} not yet saved`;
+  el("wp-reset").hidden = exported.size === 0;
   wpPreview();
 }
 function wpPreview() {
@@ -479,9 +491,15 @@ function wpPreview() {
 async function wpDownloadAll() {
   if (!wpDeck.length) return;
   const MAX = 25;
-  const pick = shuffle(wpDeck.slice()).slice(0, MAX);
+  const exported = await getExported();
+  const fresh = wpDeck.filter((c) => !exported.has(c.id)); // only cards never saved before
+  if (!fresh.length) {
+    el("wp-status").textContent = `All caught up — every card is already saved. Nothing new to download.`;
+    return;
+  }
+  const pick = shuffle(fresh.slice()).slice(0, MAX);
   el("wp-download").disabled = true;
-  el("wp-status").textContent = `Generating ${pick.length} wallpaper${pick.length === 1 ? "" : "s"}…`;
+  el("wp-status").textContent = `Generating ${pick.length} new wallpaper${pick.length === 1 ? "" : "s"}…`;
   let done = 0;
   for (let i = 0; i < pick.length; i++) {
     const url = await canvasToBlobUrl(renderWallpaper(pick[i]));
@@ -493,12 +511,25 @@ async function wpDownloadAll() {
           saveAs: false,
           conflictAction: "uniquify",
         },
-        () => { done++; setTimeout(() => URL.revokeObjectURL(url), 8000); resolve(); }
+        (downloadId) => {
+          if (downloadId !== undefined) { done++; exported.add(pick[i].id); } // only mark saved on success
+          setTimeout(() => URL.revokeObjectURL(url), 8000);
+          resolve();
+        }
       );
     });
   }
+  await setExported(exported);
+  el("wp-reset").hidden = exported.size === 0;
   el("wp-download").disabled = false;
-  el("wp-status").textContent = `Saved ${done} to Downloads → worklish-wallpapers/${wpDeck.length > MAX ? ` (capped at ${MAX})` : ""}`;
+  const remaining = fresh.length - done;
+  el("wp-status").textContent =
+    `Saved ${done} new → Downloads/worklish-wallpapers/.` +
+    (remaining > 0 ? ` ${remaining} more not yet saved — click again for the next batch.` : "");
+}
+async function wpResetExported() {
+  await setExported(new Set());
+  await openWallpaper();
 }
 
 /* ───────────────────────── view switching ───────────────────────── */
@@ -534,6 +565,7 @@ function showView(which) {
   el("fc-wallpaper-open").addEventListener("click", openWallpaper);
   el("wp-shuffle").addEventListener("click", wpPreview);
   el("wp-download").addEventListener("click", wpDownloadAll);
+  el("wp-reset").addEventListener("click", wpResetExported);
   el("wp-back").addEventListener("click", openFlashcards);
 
   await refreshBadge();
