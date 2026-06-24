@@ -69,7 +69,7 @@ Full details in **[ARCHITECTURE.md](ARCHITECTURE.md)**.
 - **Node.js 18+**
 - A **Google Gemini API key** — free tier is plenty for personal use ([get one](https://aistudio.google.com/app/apikey))
 
-### 1. Backend (Flask, port 5001)
+### 1. Backend (Flask, default port 5001)
 
 ```bash
 cd backend
@@ -77,6 +77,7 @@ python3 -m venv venv && source venv/bin/activate
 pip install -r requirements.txt
 cp .env.example .env        # then edit .env (see "Environment variables" below)
 python app.py               # → http://localhost:5001
+PORT=8080 python app.py     # …or run on any port you like
 ```
 
 ### 2. Frontend (React + Vite, port 5173)
@@ -104,6 +105,7 @@ Put these in `backend/.env`:
 | `OLLAMA_MODEL` / `OPENAI_MODEL` / `ANTHROPIC_MODEL` | optional | model override per provider |
 | `OPENAI_API_KEY` / `ANTHROPIC_API_KEY` | for those providers | API keys |
 | `NOTION_CLIENT_ID` / `NOTION_CLIENT_SECRET` / `NOTION_REDIRECT_URI` | optional | only for Notion export |
+| `PORT` | optional | backend port (default `5001`). If you change it, set the same URL in the extension's **⚙ Settings → Backend** field. |
 
 > **Two-key gotcha (Google):** the new AI Studio `AQ.` keys work for Gemini but are **rejected by the YouTube Data API**. So Worklish uses two keys — an `AQ.` key for Gemini (`GOOGLE_API_KEY`) and a classic `AIza` key for YouTube metadata (`YOUTUBE_API_KEY`). Remove any IP restriction on the YouTube key if your home IP is dynamic.
 
@@ -135,11 +137,11 @@ Only **Gemini** can analyze a video with **no captions** (it watches the video n
 
 A side panel that analyzes the YouTube video you're currently watching — it's just a UI that calls your local backend, so your API keys never leave your machine.
 
-1. Start the backend (`python app.py` → `http://localhost:5001`).
+1. Start the backend (`python app.py` → `http://localhost:5001` by default; set `PORT` to use another port).
 2. Open `chrome://extensions`, enable **Developer mode**, click **Load unpacked**, and select the `extension/` folder.
 3. Open any `youtube.com/watch?v=…` page and click the **Worklish** toolbar icon (or the floating **★ Worklish** button).
 
-The extension talks to `POST /api/analyze`; the **Backend** field at the bottom lets you point it at a different URL (e.g. a hosted backend). See [`extension/README.md`](extension/README.md) for details.
+The extension talks to `POST /api/analyze`. By default it expects the backend on `http://localhost:5001`; if yours runs elsewhere (any local port, or a hosted URL), set it in **⚙ Settings → Backend**. See [`extension/README.md`](extension/README.md) for details.
 
 ---
 

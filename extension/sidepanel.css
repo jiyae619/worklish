@@ -91,7 +91,11 @@ button#analyze-btn:disabled { opacity: 0.4; cursor: not-allowed; }
 #questions { margin: 0; padding-left: 18px; }
 #questions li { font-size: 13px; margin: 6px 0; }
 
-footer { margin-top: 24px; padding-top: 12px; border-top: 1px solid rgba(20,20,20,0.15); display: flex; align-items: center; gap: 8px; }
+footer { margin-top: 24px; padding-top: 12px; border-top: 1px solid rgba(20,20,20,0.15); }
+.settings summary { font-size: 10px; text-transform: uppercase; letter-spacing: 0.1em; color: var(--muted); font-weight: 700; cursor: pointer; }
+.settings-row { display: flex; align-items: center; gap: 8px; margin-top: 10px; }
+.settings-hint { font-size: 11px; color: var(--muted); line-height: 1.45; margin-top: 8px; }
+.settings-hint code { font-family: monospace; font-size: 10px; background: rgba(20,20,20,0.06); padding: 1px 4px; border-radius: 3px; }
 footer label { font-size: 10px; text-transform: uppercase; letter-spacing: 0.1em; color: var(--muted); font-weight: 700; }
 footer input {
   flex: 1; font: 12px monospace; padding: 6px 8px;
@@ -153,6 +157,7 @@ nav.tabs .tab.active { color: var(--ink); border-bottom-color: var(--green); }
 .fc-again:hover { background: rgba(20,20,20,0.08); }
 .fc-got { background: var(--green); border-color: var(--green); color: var(--bg); }
 
+.fc-source { font-size: 11px; font-style: italic; color: var(--muted); margin-top: 14px; text-align: center; }
 .fc-row { display: flex; justify-content: space-between; margin-top: 12px; }
 .fc-link { background: none; border: none; cursor: pointer; padding: 4px; opacity: 0.75;
   color: var(--ink); font: 700 11px/1 system-ui; text-transform: uppercase; letter-spacing: 0.06em; }

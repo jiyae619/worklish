@@ -370,14 +370,15 @@ if __name__ == '__main__':
         print("WARNING: GOOGLE_API_KEY not found in environment variables")
         print("Please create a .env file with your API key")
     
+    port = int(os.getenv('PORT', '5001'))
     idle_minutes = os.getenv('WORKLISH_IDLE_MINUTES')
     if idle_minutes:
         # Service mode (launchd): self-stop when idle; no reloader so launchd
         # tracks a stable PID and os._exit() actually ends the process.
         _start_idle_watchdog(float(idle_minutes))
         print(f"Starting Worklish backend (service mode, idle-exit {idle_minutes}m)...")
-        app.run(host='127.0.0.1', port=5001, debug=False, use_reloader=False)
+        app.run(host='127.0.0.1', port=port, debug=False, use_reloader=False)
     else:
         print("Starting Worklish API server...")
-        print("API will be available at http://localhost:5001")
-        app.run(debug=True, port=5001)
+        print(f"API will be available at http://localhost:{port}")
+        app.run(debug=True, port=port)

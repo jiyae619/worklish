@@ -33,7 +33,7 @@ Results.jsx ◀──── JSON ────           (renders Insights / Expr
 
 - **Frontend** (`src/`): `App.jsx` (landing + submit), `Results.jsx` (results shell + Notion export),
   `PMInsights.jsx`, `EnglishExpressions.jsx`, `LoadingAnalysis.jsx`, `NotionCallback.jsx`.
-- **Backend** — two synced copies: `backend/` (local dev, Flask on `:5001`) and `api/` (Vercel entry `index.py`).
+- **Backend** — two synced copies: `backend/` (local dev, Flask on `:5001` by default, override with `PORT`) and `api/` (Vercel entry `index.py`).
   - `services/ai_service.py` — Gemini calls (`gemini-3.1-flash-lite`); structured output via `response_schema`
     (Pydantic); code-based timestamp lookup + verbatim verification; `temperature` 0.2.
   - `services/youtube_service.py` — transcript fetch (English-only guard via `_available_languages`) + metadata.

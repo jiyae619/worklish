@@ -241,7 +241,7 @@ async function analyze() {
   } catch (err) {
     const msg = String(err.message || err);
     const hint = /high demand|503|UNAVAILABLE/i.test(msg) ? " — Gemini is busy, click Analyze again." : "";
-    const conn = /Failed to fetch|NetworkError/i.test(msg) ? " — is the backend running on " + backend + "?" : "";
+    const conn = /Failed to fetch|NetworkError/i.test(msg) ? ` — can't reach the backend at ${backend}. Is it running? If it's on a different port, set its URL in ⚙ Settings → Backend.` : "";
     setStatus("⚠ " + msg + hint + conn, true);
   } finally {
     el("analyze-btn").disabled = false;
@@ -300,9 +300,12 @@ function showCard() {
     t.appendChild(document.createTextNode(" " + c.usage_tip));
     back.appendChild(t);
   }
-  if (c.video_title) back.appendChild(div("fc-b-src", `from “${c.video_title}”`));
   back.hidden = true;
 
+  // Source clip title stays visible (not just on flip) so you know what "Play moment" refers to.
+  const src = el("fc-source");
+  src.textContent = c.video_title ? `▶ from “${c.video_title}”` : "";
+  src.hidden = !c.video_title;
   el("fc-play").style.display = c.timestamp_url ? "" : "none";
 }
 
@@ -380,29 +383,6 @@ async function exportJson() {
   const deck = await getDeck();
   if (!deck.length) return;
   download(`worklish-flashcards-${dateStamp()}.json`, JSON.stringify(deck, null, 2), "application/json");
-}
-async function handleImportFile(ev) {
-  const file = ev.target.files && ev.target.files[0];
-  if (!file) return;
-  try {
-    const incoming = JSON.parse(await file.text());
-    if (!Array.isArray(incoming)) throw new Error("expected a JSON array of cards");
-    const byId = new Map((await getDeck()).map((c) => [c.id, c]));
-    let added = 0;
-    for (const c of incoming) {
-      if (!c || !c.phrase) continue;
-      const id = c.id || cardId(c.video_id, c.phrase);
-      if (!byId.has(id)) { byId.set(id, { ...c, id }); added++; }
-    }
-    await setDeck([...byId.values()]);
-    await refreshBadge();
-    await openFlashcards();
-    alert(`Imported ${added} new card${added === 1 ? "" : "s"}.`);
-  } catch (e) {
-    alert("Import failed: " + (e.message || e));
-  } finally {
-    ev.target.value = "";
-  }
 }
 async function clearDeck() {
   const deck = await getDeck();
@@ -548,6 +528,10 @@ function showView(which) {
   el("backend-url").value = backend || DEFAULT_BACKEND;
 
   el("analyze-btn").addEventListener("click", analyze);
+  el("backend-url").addEventListener("change", async () => {
+    const v = el("backend-url").value.trim().replace(/\/$/, "");
+    await chrome.storage.local.set({ backend: v || DEFAULT_BACKEND });
+  });
   el("tab-analyze").addEventListener("click", () => showView("analyze"));
   el("tab-flashcards").addEventListener("click", () => showView("flashcards"));
 
@@ -559,8 +543,6 @@ function showView(which) {
   el("fc-restart").addEventListener("click", openFlashcards);
   el("fc-csv").addEventListener("click", exportCsv);
   el("fc-json").addEventListener("click", exportJson);
-  el("fc-import").addEventListener("click", () => el("fc-file").click());
-  el("fc-file").addEventListener("change", handleImportFile);
   el("fc-clear").addEventListener("click", clearDeck);
   el("fc-wallpaper-open").addEventListener("click", openWallpaper);
   el("wp-shuffle").addEventListener("click", wpPreview);

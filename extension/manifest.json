@@ -6,8 +6,8 @@
   "description": "Analyze the YouTube video you're watching for work insights and advanced English expressions.",
   "permissions": ["sidePanel", "tabs", "storage", "unlimitedStorage", "downloads", "nativeMessaging"],
   "host_permissions": [
-    "http://localhost:5001/*",
-    "http://127.0.0.1:5001/*"
+    "http://localhost/*",
+    "http://127.0.0.1/*"
   ],
   "background": { "service_worker": "background.js" },
   "action": { "default_title": "Open Worklish" },

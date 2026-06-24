@@ -41,8 +41,14 @@
     </div>
 
     <footer>
-      <label for="backend-url">Backend</label>
-      <input id="backend-url" type="text" placeholder="http://localhost:5001" spellcheck="false" />
+      <details class="settings">
+        <summary>⚙ Settings</summary>
+        <div class="settings-row">
+          <label for="backend-url">Backend</label>
+          <input id="backend-url" type="text" placeholder="http://localhost:5001" spellcheck="false" />
+        </div>
+        <p class="settings-hint">Default <code>http://localhost:5001</code>. If you started the backend on another port (e.g. <code>PORT=8080 python app.py</code>), type its full URL here — it's saved automatically.</p>
+      </details>
     </footer>
   </div>
 
@@ -53,7 +59,6 @@
       <div class="fc-actions">
         <button id="fc-csv" title="Export CSV (Anki / Quizlet)">CSV</button>
         <button id="fc-json" title="Export JSON backup">JSON</button>
-        <button id="fc-import" title="Import a JSON backup">Import</button>
         <button id="fc-clear" title="Delete all cards">Clear</button>
       </div>
     </div>
@@ -73,6 +78,7 @@
         <button id="fc-again" class="fc-again">Again</button>
         <button id="fc-got" class="fc-got">Got it</button>
       </div>
+      <div id="fc-source" class="fc-source" hidden></div>
       <div class="fc-row">
         <button id="fc-play" class="fc-link">▶ Play moment</button>
         <button id="fc-delete" class="fc-link danger">Delete card</button>
@@ -106,7 +112,6 @@
       <button id="wp-back" class="fc-link">← back to cards</button>
     </div>
 
-    <input type="file" id="fc-file" accept="application/json,.json" hidden />
   </div>
 
   <script src="sidepanel.js"></script>

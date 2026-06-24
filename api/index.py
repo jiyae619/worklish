@@ -264,6 +264,7 @@ if __name__ == '__main__':
     if not os.getenv('GOOGLE_API_KEY'):
         print("WARNING: GOOGLE_API_KEY not found in environment variables")
     
+    port = int(os.getenv('PORT', '5001'))
     print("Starting Worklish API server...")
-    print("API will be available at http://localhost:5001")
-    app.run(debug=True, port=5001)
+    print(f"API will be available at http://localhost:{port}")
+    app.run(debug=True, port=port)
