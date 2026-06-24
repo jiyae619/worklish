@@ -11,6 +11,20 @@ It's for people who want to level up their **business/strategy/tech thinking** a
 
 ---
 
+## See it in action
+
+Worklish as a **Chrome side panel**, analyzing a Lenny's Podcast episode (Anthropic's Fiona Fung on Claude Code) right next to the video:
+
+**Work insight** — a 3-sentence summary and source-grounded insights from the talk:
+
+![Worklish side panel showing the video summary and insights](docs/screenshots/insights.png)
+
+**Advanced English** — the expressions used in the video, each with its meaning, an example, and a clickable timestamp that jumps the player to that moment:
+
+![Worklish side panel showing English expressions with clickable timestamps](docs/screenshots/expressions.png)
+
+---
+
 ## Features
 
 - 📋 **3-sentence summary** of the whole video.
