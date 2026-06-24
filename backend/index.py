@@ -25,7 +25,7 @@ auth_service = AuthService()
 @app.route('/api/health', methods=['GET'])
 def health_check():
     """Health check endpoint."""
-    return jsonify({"status": "healthy", "message": "PM-ENG API is running"})
+    return jsonify({"status": "healthy", "message": "Worklish API is running"})
 
 
 @app.route('/api/auth/login', methods=['GET'])

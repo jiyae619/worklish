@@ -183,6 +183,4 @@ ARCHITECTURE.md How the pipeline actually works
 
 ## License
 
-No license yet — add a `LICENSE` file (e.g. MIT) if you'd like others to reuse the code.
-
-Built by **Jiyae Choi**.
+[MIT](LICENSE) © 2026 Jiyae Choi — free to use, modify, and distribute.

@@ -54,7 +54,7 @@ def _start_idle_watchdog(idle_minutes):
 @app.route('/api/health', methods=['GET'])
 def health_check():
     """Health check endpoint."""
-    return jsonify({"status": "healthy", "message": "PM-ENG API is running"})
+    return jsonify({"status": "healthy", "message": "Worklish API is running"})
 
 
 @app.route('/api/analyze', methods=['POST'])
@@ -378,6 +378,6 @@ if __name__ == '__main__':
         print(f"Starting Worklish backend (service mode, idle-exit {idle_minutes}m)...")
         app.run(host='127.0.0.1', port=5001, debug=False, use_reloader=False)
     else:
-        print("Starting PM-ENG API server...")
+        print("Starting Worklish API server...")
         print("API will be available at http://localhost:5001")
         app.run(debug=True, port=5001)
