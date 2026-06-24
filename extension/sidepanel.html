@@ -9,34 +9,81 @@
     <h1>Work <span class="x">&times;</span> English</h1>
   </header>
 
-  <div id="video-info" class="muted">Open a YouTube video, then analyze it.</div>
+  <nav class="tabs">
+    <button id="tab-analyze" class="tab active">Analyze</button>
+    <button id="tab-flashcards" class="tab">Flashcards <span id="fc-badge" class="badge" hidden>0</span></button>
+  </nav>
 
-  <button id="analyze-btn" disabled>Analyze this video</button>
-  <div id="status" class="status" hidden></div>
+  <!-- ───────── ANALYZE VIEW ───────── -->
+  <div id="view-analyze">
+    <div id="video-info" class="muted">Open a YouTube video, then analyze it.</div>
 
-  <div id="results" hidden>
-    <section id="summary-sec" hidden>
-      <h2>Summary</h2>
-      <p id="summary"></p>
-    </section>
+    <button id="analyze-btn" disabled>Analyze this video</button>
+    <div id="status" class="status" hidden></div>
 
-    <section id="insights-sec" hidden>
-      <h2>Insights</h2>
-      <div id="insights"></div>
-      <h3 id="q-head" hidden>Questions to reflect on</h3>
-      <ul id="questions"></ul>
-    </section>
+    <div id="results" hidden>
+      <section id="summary-sec" hidden>
+        <h2>Summary</h2>
+        <p id="summary"></p>
+      </section>
 
-    <section id="expr-sec" hidden>
-      <h2>English Expressions</h2>
-      <div id="expressions"></div>
-    </section>
+      <section id="insights-sec" hidden>
+        <h2>Insights</h2>
+        <div id="insights"></div>
+        <h3 id="q-head" hidden>Questions to reflect on</h3>
+        <ul id="questions"></ul>
+      </section>
+
+      <section id="expr-sec" hidden>
+        <h2>English Expressions</h2>
+        <div id="expressions"></div>
+      </section>
+    </div>
+
+    <footer>
+      <label for="backend-url">Backend</label>
+      <input id="backend-url" type="text" placeholder="http://localhost:5001" spellcheck="false" />
+    </footer>
   </div>
 
-  <footer>
-    <label for="backend-url">Backend</label>
-    <input id="backend-url" type="text" placeholder="http://localhost:5001" spellcheck="false" />
-  </footer>
+  <!-- ───────── FLASHCARDS VIEW ───────── -->
+  <div id="view-flashcards" hidden>
+    <div class="fc-bar">
+      <span id="fc-count">0 cards</span>
+      <div class="fc-actions">
+        <button id="fc-csv" title="Export CSV (Anki / Quizlet)">CSV</button>
+        <button id="fc-json" title="Export JSON backup">JSON</button>
+        <button id="fc-import" title="Import a JSON backup">Import</button>
+        <button id="fc-clear" title="Delete all cards">Clear</button>
+      </div>
+    </div>
+
+    <div id="fc-empty" class="muted">No cards yet. Analyze a video and tap <b>★ Save</b> on an expression to start your deck. It accumulates across sessions.</div>
+
+    <div id="fc-study" hidden>
+      <div id="fc-progress" class="fc-progress"></div>
+      <div id="fc-card" class="fc-card">
+        <div id="fc-hint" class="fc-hint">tap to flip</div>
+        <div id="fc-front" class="fc-front"></div>
+        <div id="fc-back" class="fc-back" hidden></div>
+      </div>
+      <div class="fc-controls">
+        <button id="fc-again" class="fc-again">Again</button>
+        <button id="fc-got" class="fc-got">Got it</button>
+      </div>
+      <div class="fc-row">
+        <button id="fc-play" class="fc-link">▶ Play moment</button>
+        <button id="fc-delete" class="fc-link danger">Delete card</button>
+      </div>
+    </div>
+
+    <div id="fc-done" class="fc-done" hidden>
+      <p>Reviewed all <b id="fc-done-n">0</b> cards 🎉</p>
+      <button id="fc-restart">Review again</button>
+    </div>
+
+    <input type="file" id="fc-file" accept="application/json,.json" hidden />
+  </div>
 
   <script src="sidepanel.js"></script>
 </body>
