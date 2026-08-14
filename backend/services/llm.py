@@ -73,6 +73,15 @@ class GeminiProvider:
 
     def __init__(self):
         from google import genai
+        from google.genai import types
+        # The SDK knows how to retry 503/429/5xx with exponential backoff + jitter, but it
+        # defaults to never retrying (retry_args(None) -> stop_after_attempt(1)). Without this,
+        # one transient "model is experiencing high demand" 503 fails the whole analysis.
+        http_options = types.HttpOptions(retry_options=types.HttpRetryOptions(
+            attempts=3,          # the initial call + 2 retries
+            initial_delay=2.0,   # ~2s then ~4s, plus jitter
+            max_delay=10.0,
+        ))
         project_id = os.getenv('GOOGLE_CLOUD_PROJECT')
         location = os.getenv('GOOGLE_CLOUD_LOCATION', 'us-central1')
         if not project_id:
@@ -80,9 +89,10 @@ class GeminiProvider:
             api_key = os.getenv('GOOGLE_API_KEY')
             if not api_key:
                 raise ValueError("Neither GOOGLE_CLOUD_PROJECT nor GOOGLE_API_KEY found in environment variables")
-            self.client = genai.Client(api_key=api_key)
+            self.client = genai.Client(api_key=api_key, http_options=http_options)
         else:
-            self.client = genai.Client(vertexai=True, project=project_id, location=location)
+            self.client = genai.Client(vertexai=True, project=project_id, location=location,
+                                       http_options=http_options)
         self.model = os.getenv('GEMINI_MODEL', 'gemini-3.1-flash-lite')
 
     def _call(self, parts, schema):

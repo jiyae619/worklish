@@ -210,6 +210,21 @@ async function postAnalyze(backend, youtubeUrl) {
   return resp.json();
 }
 
+// Poll until the backend answers, after asking for a wake. A fixed wait won't do:
+// starting from an idle exit measured 6-11s locally (launchd + Python imports).
+async function waitForBackend(backend, timeoutMs = 20000) {
+  const deadline = Date.now() + timeoutMs;
+  while (Date.now() < deadline) {
+    try {
+      if ((await fetch(`${backend}/api/health`, { cache: "no-store" })).ok) return true;
+    } catch {
+      // still down — keep polling until the deadline
+    }
+    await new Promise((r) => setTimeout(r, 500));
+  }
+  return false;
+}
+
 async function analyze() {
   if (!currentVideoId) return;
   const backend = (el("backend-url").value.trim() || DEFAULT_BACKEND).replace(/\/$/, "");
@@ -225,11 +240,13 @@ async function analyze() {
     try {
       data = await postAnalyze(backend, youtubeUrl);
     } catch (netErr) {
-      // The backend wakes on YouTube visits and sleeps when idle — the first
-      // request after idle can land before it's up. Wait briefly and retry once.
+      // The backend sleeps when idle and only wakes on a YouTube navigation, so
+      // it can be down with nothing about to start it — sitting on one watch page
+      // past the idle timeout is enough. Ask for a wake, then retry once.
       if (/Failed to fetch|NetworkError/i.test(String(netErr))) {
         setStatus("Starting the backend… (first request after idle)");
-        await new Promise((r) => setTimeout(r, 2500));
+        await chrome.runtime.sendMessage({ type: "wake-backend" }).catch(() => {});
+        if (!(await waitForBackend(backend))) throw netErr; // report the original connection error
         data = await postAnalyze(backend, youtubeUrl);
       } else {
         throw netErr;
@@ -237,7 +254,10 @@ async function analyze() {
     }
     if (!data.success) throw new Error(data.error || "Analysis failed");
     await render(data);
-    setStatus("");
+    // A partial result: one half came back, the other errored (usually a transient 503).
+    // Show what we got and say what's missing rather than discarding the lot.
+    const warnings = data.warnings || [];
+    setStatus(warnings.length ? "⚠ " + warnings.join(" | ") + " — click Analyze to retry the missing part." : "");
   } catch (err) {
     const msg = String(err.message || err);
     const hint = /high demand|503|UNAVAILABLE/i.test(msg) ? " — Gemini is busy, click Analyze again." : "";
