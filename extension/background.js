@@ -3,12 +3,18 @@ chrome.sidePanel
   .setPanelBehavior({ openPanelOnActionClick: true })
   .catch((e) => console.warn("setPanelBehavior:", e));
 
-// Open the side panel when the in-page "Worklish" button asks (content.js).
-chrome.runtime.onMessage.addListener((msg, sender) => {
+chrome.runtime.onMessage.addListener((msg, sender, sendResponse) => {
+  // Open the side panel when the in-page "Worklish" button asks (content.js).
   if (msg && msg.type === "open-worklish" && sender.tab) {
     chrome.sidePanel
       .open({ tabId: sender.tab.id })
       .catch((e) => console.warn("sidePanel.open (use the toolbar icon instead):", e));
+  }
+  // The side panel hit a dead port. Force the wake past the debounce — we know
+  // the backend is down — and answer once the host has kickstarted it.
+  if (msg && msg.type === "wake-backend") {
+    wakeBackend("sidepanel-retry", true).then(sendResponse);
+    return true; // keep the message channel open for the async reply
   }
 });
 
@@ -19,23 +25,32 @@ chrome.runtime.onMessage.addListener((msg, sender) => {
 const WAKER_HOST = "com.worklish.waker";
 let lastWakeAt = 0;
 
-function wakeBackend(reason) {
+// Resolves once the native host replies, so callers can wait for the kickstart
+// before retrying a request. Never rejects: a wake we couldn't do is a warning.
+function wakeBackend(reason, force = false) {
   const now = Date.now();
-  if (now - lastWakeAt < 30000) return; // debounce: at most once / 30s
-  lastWakeAt = now;
-  try {
-    chrome.runtime.sendNativeMessage(WAKER_HOST, { wake: true, reason }, (resp) => {
-      if (chrome.runtime.lastError) {
-        // Host not installed / not allowed — the side panel still works if the
-        // backend is started manually, so this is a warning, not a failure.
-        console.warn("worklish wake:", chrome.runtime.lastError.message);
-      } else {
-        console.debug("worklish wake ->", resp);
-      }
-    });
-  } catch (e) {
-    console.warn("worklish wake threw:", e);
+  if (!force && now - lastWakeAt < 30000) {
+    return Promise.resolve({ ok: false, skipped: "debounced" }); // at most once / 30s
   }
+  lastWakeAt = now;
+  return new Promise((resolve) => {
+    try {
+      chrome.runtime.sendNativeMessage(WAKER_HOST, { wake: true, reason }, (resp) => {
+        if (chrome.runtime.lastError) {
+          // Host not installed / not allowed — the side panel still works if the
+          // backend is started manually, so this is a warning, not a failure.
+          console.warn("worklish wake:", chrome.runtime.lastError.message);
+          resolve({ ok: false, error: chrome.runtime.lastError.message });
+        } else {
+          console.debug("worklish wake ->", resp);
+          resolve(resp);
+        }
+      });
+    } catch (e) {
+      console.warn("worklish wake threw:", e);
+      resolve({ ok: false, error: String(e) });
+    }
+  });
 }
 
 function isWatchUrl(url) {

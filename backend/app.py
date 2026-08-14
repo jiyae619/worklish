@@ -172,20 +172,24 @@ def analyze_video():
                 except Exception as e:
                     errors.append(f"English expression analysis failed: {str(e)}")
 
-        if errors:
+        # The two calls fail independently (a transient 503 usually hits just one), so only
+        # give up when nothing came back. Otherwise return the half that worked and report
+        # the rest in `warnings` — clients render each section independently.
+        if errors and not (pm_summary or pm_insights or english_expressions):
             return jsonify({
                 "success": False,
                 "error": " | ".join(errors)
             }), 500
 
-        # Return successful response
+        # Return successful response (possibly partial — see `warnings`)
         return jsonify({
             "success": True,
             "video": video_metadata,
             "summary": pm_summary,
             "pm_insights": pm_insights,
             "pm_questions": pm_questions,
-            "english_expressions": english_expressions
+            "english_expressions": english_expressions,
+            "warnings": errors
         })
         
     except Exception as e:
