@@ -101,8 +101,8 @@ Put these in `backend/.env`:
 | `GOOGLE_API_KEY` | ✅ (for Gemini) | Gemini key from **Google AI Studio** (new keys look like `AQ.…`). |
 | `YOUTUBE_API_KEY` | ✅ for metadata | **YouTube Data API** key from **Google Cloud Console** (classic `AIza…`). Used to read video title/duration. |
 | `LLM_PROVIDER` | optional | `gemini` (default) · `ollama` · `openai` · `anthropic` |
-| `GEMINI_MODEL` | optional | defaults to `gemini-3.1-flash-lite` |
-| `GEMINI_FALLBACK_MODEL` | optional | if set, tried once when `GEMINI_MODEL` keeps returning 503/429/500 after retries (e.g. during a Gemini demand spike) |
+| `GEMINI_MODEL` | optional | defaults to `gemini-3.5-flash-lite` |
+| `GEMINI_FALLBACK_MODEL` | optional | defaults to `gemini-3.8-flash`, tried once when `GEMINI_MODEL` keeps returning 503/429/500 after retries (e.g. during a Gemini demand spike). Set to `''` to disable. |
 | `OLLAMA_MODEL` / `OPENAI_MODEL` / `ANTHROPIC_MODEL` | optional | model override per provider |
 | `OPENAI_API_KEY` / `ANTHROPIC_API_KEY` | for those providers | API keys |
 | `NOTION_CLIENT_ID` / `NOTION_CLIENT_SECRET` / `NOTION_REDIRECT_URI` | optional | only for Notion export |

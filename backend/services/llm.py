@@ -8,7 +8,9 @@ understanding); the others raise on that path, so transcript-less videos need Ge
 
 Per-provider model + connection are read from the environment so a forker can bring their
 own model with their own key:
-    GEMINI_MODEL (default gemini-3.1-flash-lite)   + GOOGLE_API_KEY / GOOGLE_CLOUD_PROJECT
+    GEMINI_MODEL (default gemini-3.5-flash-lite)   + GOOGLE_API_KEY / GOOGLE_CLOUD_PROJECT
+    GEMINI_FALLBACK_MODEL (default gemini-3.8-flash) — tried once if GEMINI_MODEL is still
+        503/429/500'ing after retries; set to '' to disable
     OLLAMA_MODEL (default llama3.2:3b)             + OLLAMA_HOST (default http://localhost:11434)
     OPENAI_MODEL (default gpt-4o-mini)            + OPENAI_API_KEY
     ANTHROPIC_MODEL (default claude-opus-4-8)     + ANTHROPIC_API_KEY
@@ -95,11 +97,12 @@ class GeminiProvider:
         else:
             self.client = genai.Client(vertexai=True, project=project_id, location=location,
                                        http_options=http_options)
-        self.model = os.getenv('GEMINI_MODEL', 'gemini-3.1-flash-lite')
-        # Optional second model to try once the primary is still 503'ing after all retries.
+        self.model = os.getenv('GEMINI_MODEL', 'gemini-3.5-flash-lite')
+        # Second model to try once the primary is still 429/500/503'ing after all retries.
         # Overload is usually specific to one model, so a different one often succeeds
-        # immediately. Unset by default (no fallback) unless the forker opts in.
-        self.fallback_model = os.getenv('GEMINI_FALLBACK_MODEL', '').strip()
+        # immediately. Defaults on (a different flash tier); set GEMINI_FALLBACK_MODEL='' to
+        # disable.
+        self.fallback_model = os.getenv('GEMINI_FALLBACK_MODEL', 'gemini-3.8-flash').strip()
 
     def _generate(self, model, parts, schema):
         from google.genai import types
