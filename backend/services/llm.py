@@ -77,10 +77,12 @@ class GeminiProvider:
         # The SDK knows how to retry 503/429/5xx with exponential backoff + jitter, but it
         # defaults to never retrying (retry_args(None) -> stop_after_attempt(1)). Without this,
         # one transient "model is experiencing high demand" 503 fails the whole analysis.
+        # 5 attempts with delays up to 20s gives ~45s of total retry budget — long enough to
+        # ride out most demand spikes, which tend to run tens of seconds, not single-digit ones.
         http_options = types.HttpOptions(retry_options=types.HttpRetryOptions(
-            attempts=3,          # the initial call + 2 retries
-            initial_delay=2.0,   # ~2s then ~4s, plus jitter
-            max_delay=10.0,
+            attempts=5,          # the initial call + 4 retries
+            initial_delay=2.0,   # ~2s, 4s, 8s, 16s, plus jitter, capped at max_delay
+            max_delay=20.0,
         ))
         project_id = os.getenv('GOOGLE_CLOUD_PROJECT')
         location = os.getenv('GOOGLE_CLOUD_LOCATION', 'us-central1')
@@ -94,11 +96,15 @@ class GeminiProvider:
             self.client = genai.Client(vertexai=True, project=project_id, location=location,
                                        http_options=http_options)
         self.model = os.getenv('GEMINI_MODEL', 'gemini-3.1-flash-lite')
+        # Optional second model to try once the primary is still 503'ing after all retries.
+        # Overload is usually specific to one model, so a different one often succeeds
+        # immediately. Unset by default (no fallback) unless the forker opts in.
+        self.fallback_model = os.getenv('GEMINI_FALLBACK_MODEL', '').strip()
 
-    def _call(self, parts, schema):
+    def _generate(self, model, parts, schema):
         from google.genai import types
         resp = self.client.models.generate_content(
-            model=self.model,
+            model=model,
             contents=parts,
             config={
                 "temperature": 0.2,
@@ -114,6 +120,20 @@ class GeminiProvider:
                 return [p.model_dump() if hasattr(p, "model_dump") else p for p in parsed]
             return parsed.model_dump() if hasattr(parsed, "model_dump") else parsed
         return _coerce(_extract_json(resp.text), schema)
+
+    def _call(self, parts, schema):
+        from google.genai import errors
+        try:
+            return self._generate(self.model, parts, schema)
+        except errors.APIError as e:
+            # Only fail over on the same "server is overloaded" class the SDK already retries
+            # for (see http_options above); anything else (bad request, auth, etc.) should
+            # surface immediately rather than waste time on a model that won't fix it.
+            if not self.fallback_model or self.fallback_model == self.model or e.code not in (429, 500, 503):
+                raise
+            print(f"WARNING: Gemini model '{self.model}' still failing after retries ({e.code}); "
+                  f"trying fallback model '{self.fallback_model}'")
+            return self._generate(self.fallback_model, parts, schema)
 
     def complete_json(self, prompt, user_text, schema, context=""):
         parts = []
