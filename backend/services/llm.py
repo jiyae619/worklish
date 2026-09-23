@@ -8,7 +8,9 @@ understanding); the others raise on that path, so transcript-less videos need Ge
 
 Per-provider model + connection are read from the environment so a forker can bring their
 own model with their own key:
-    GEMINI_MODEL (default gemini-3.1-flash-lite)   + GOOGLE_API_KEY / GOOGLE_CLOUD_PROJECT
+    GEMINI_MODEL (default gemini-3.5-flash-lite)   + GOOGLE_API_KEY / GOOGLE_CLOUD_PROJECT
+    GEMINI_FALLBACK_MODEL (default gemini-3.8-flash) — tried once if GEMINI_MODEL is still
+        503/429/500'ing after retries; set to '' to disable
     OLLAMA_MODEL (default llama3.2:3b)             + OLLAMA_HOST (default http://localhost:11434)
     OPENAI_MODEL (default gpt-4o-mini)            + OPENAI_API_KEY
     ANTHROPIC_MODEL (default claude-opus-4-8)     + ANTHROPIC_API_KEY
@@ -77,10 +79,12 @@ class GeminiProvider:
         # The SDK knows how to retry 503/429/5xx with exponential backoff + jitter, but it
         # defaults to never retrying (retry_args(None) -> stop_after_attempt(1)). Without this,
         # one transient "model is experiencing high demand" 503 fails the whole analysis.
+        # 5 attempts with delays up to 20s gives ~45s of total retry budget — long enough to
+        # ride out most demand spikes, which tend to run tens of seconds, not single-digit ones.
         http_options = types.HttpOptions(retry_options=types.HttpRetryOptions(
-            attempts=3,          # the initial call + 2 retries
-            initial_delay=2.0,   # ~2s then ~4s, plus jitter
-            max_delay=10.0,
+            attempts=5,          # the initial call + 4 retries
+            initial_delay=2.0,   # ~2s, 4s, 8s, 16s, plus jitter, capped at max_delay
+            max_delay=20.0,
         ))
         project_id = os.getenv('GOOGLE_CLOUD_PROJECT')
         location = os.getenv('GOOGLE_CLOUD_LOCATION', 'us-central1')
@@ -93,12 +97,17 @@ class GeminiProvider:
         else:
             self.client = genai.Client(vertexai=True, project=project_id, location=location,
                                        http_options=http_options)
-        self.model = os.getenv('GEMINI_MODEL', 'gemini-3.1-flash-lite')
+        self.model = os.getenv('GEMINI_MODEL', 'gemini-3.5-flash-lite')
+        # Second model to try once the primary is still 429/500/503'ing after all retries.
+        # Overload is usually specific to one model, so a different one often succeeds
+        # immediately. Defaults on (a different flash tier); set GEMINI_FALLBACK_MODEL='' to
+        # disable.
+        self.fallback_model = os.getenv('GEMINI_FALLBACK_MODEL', 'gemini-3.8-flash').strip()
 
-    def _call(self, parts, schema):
+    def _generate(self, model, parts, schema):
         from google.genai import types
         resp = self.client.models.generate_content(
-            model=self.model,
+            model=model,
             contents=parts,
             config={
                 "temperature": 0.2,
@@ -114,6 +123,20 @@ class GeminiProvider:
                 return [p.model_dump() if hasattr(p, "model_dump") else p for p in parsed]
             return parsed.model_dump() if hasattr(parsed, "model_dump") else parsed
         return _coerce(_extract_json(resp.text), schema)
+
+    def _call(self, parts, schema):
+        from google.genai import errors
+        try:
+            return self._generate(self.model, parts, schema)
+        except errors.APIError as e:
+            # Only fail over on the same "server is overloaded" class the SDK already retries
+            # for (see http_options above); anything else (bad request, auth, etc.) should
+            # surface immediately rather than waste time on a model that won't fix it.
+            if not self.fallback_model or self.fallback_model == self.model or e.code not in (429, 500, 503):
+                raise
+            print(f"WARNING: Gemini model '{self.model}' still failing after retries ({e.code}); "
+                  f"trying fallback model '{self.fallback_model}'")
+            return self._generate(self.fallback_model, parts, schema)
 
     def complete_json(self, prompt, user_text, schema, context=""):
         parts = []
